@@ -23,7 +23,7 @@ A web application that allows you to easily manage 24/7 YouTube live streaming w
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/youtube-live.git
+   git clone https://github.com/Wimboro/youtube-live.git
    cd youtube-live
    ```
 
