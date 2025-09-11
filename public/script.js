@@ -20,6 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggleStreamKey = document.getElementById('toggleStreamKey');
   const mediaTableBody = document.getElementById('mediaTableBody');
   const refreshMediaBtn = document.getElementById('refreshMediaBtn');
+  const mediaUploadInput = document.getElementById('mediaUploadInput');
+  const uploadMediaBtn = document.getElementById('uploadMediaBtn');
   const clearLogsBtn = document.getElementById('clearLogsBtn');
   const settingsForm = document.getElementById('settingsForm');
   
@@ -374,6 +376,37 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshMediaBtn.addEventListener('click', () => {
     loadMediaFiles();
     addLog('Media files refreshed');
+  });
+
+  // Upload media files
+  uploadMediaBtn.addEventListener('click', async () => {
+    const file = mediaUploadInput.files[0];
+    if (!file) {
+      showError('Please select a media file to upload');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('mediaFile', file);
+
+    try {
+      const response = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        addLog(`Uploaded ${result.filename}`);
+        mediaUploadInput.value = '';
+        loadMediaFiles();
+      } else {
+        showError(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      showError('Error uploading media');
+    }
   });
   
   // Clear logs

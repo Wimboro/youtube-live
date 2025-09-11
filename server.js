@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const ffmpeg = require('fluent-ffmpeg');
+const multer = require('multer');
 const Database = require('./database');
 
 const app = express();
@@ -30,6 +31,20 @@ let currentConfig = {
   randomize: true,
   loop: true
 };
+
+// Configure file upload handling
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = currentConfig.mediaDirectory || path.join(__dirname, 'media');
+    fs.mkdirSync(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+
+const upload = multer({ storage });
 
 // Function to load configuration from database
 const loadConfigFromDatabase = async () => {
@@ -198,6 +213,14 @@ app.get('/api/config', async (req, res) => {
     console.error('Error getting config:', error);
     res.status(500).json({ error: 'Failed to load configuration' });
   }
+});
+
+// Route for uploading media files
+app.post('/api/media/upload', upload.single('mediaFile'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'No file uploaded' });
+  }
+  res.json({ success: true, filename: req.file.filename });
 });
 
 // New route for saving configuration
