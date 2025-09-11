@@ -180,8 +180,9 @@
         <!-- Settings View -->
         <div id="settingsView" class="d-none">
           <div class="card mb-4">
-            <div class="card-header">
-              Stream Settings
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span>Stream Settings</span>
+              <span class="badge bg-info"><i class="bi bi-database"></i> Saved to Database</span>
             </div>
             <div class="card-body">
               <form id="settingsForm">
@@ -208,7 +209,12 @@
                   <input type="checkbox" class="form-check-input" id="loopCheckbox" checked>
                   <label class="form-check-label" for="loopCheckbox">Loop Playlist</label>
                 </div>
-                <button type="submit" class="btn btn-primary">Save Settings</button>
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-floppy"></i> Save Settings to Database
+                </button>
+                <div class="form-text mt-2">
+                  <i class="bi bi-info-circle"></i> All settings are automatically saved to a local SQLite database and will persist between server restarts.
+                </div>
               </form>
             </div>
           </div>
