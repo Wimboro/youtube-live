@@ -289,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     
     const newConfig = {
-      ...appState.config,
       streamKey: streamKeyInput.value,
       mediaDirectory: mediaDirectoryInput.value || './media',
       randomize: randomizeCheckbox.checked,
@@ -297,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     try {
-      const response = await fetch('/api/stream/start', {
+      const response = await fetch('/api/config/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -308,16 +307,29 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await response.json();
       
       if (result.success) {
-        appState.config = newConfig;
+        appState.config = result.config;
         updateUI();
-        addLog('Settings saved successfully');
+        addLog('Settings saved successfully to database');
         
-        // Show dashboard after saving
-        showView(dashboardView);
-        document.querySelector('.nav-link:first-child').classList.add('active');
+        // Show success message
+        const successAlert = document.createElement('div');
+        successAlert.className = 'alert alert-success alert-dismissible fade show';
+        successAlert.innerHTML = `
+          <i class="bi bi-check-circle-fill"></i> Configuration saved successfully!
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        settingsForm.insertBefore(successAlert, settingsForm.firstChild);
+        
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => {
+          if (successAlert.parentNode) {
+            successAlert.remove();
+          }
+        }, 3000);
+        
       } else {
         addLog('Failed to save settings');
-        showError('Failed to save settings');
+        showError(result.error || 'Failed to save settings');
       }
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -326,15 +338,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  // Quick settings changes
-  randomizeSwitch.addEventListener('change', () => {
-    appState.config.randomize = randomizeSwitch.checked;
-    addLog(`Randomize media ${randomizeSwitch.checked ? 'enabled' : 'disabled'}`);
+  // Quick settings changes - save to database
+  const saveQuickSetting = async (key, value) => {
+    try {
+      const response = await fetch('/api/config/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ [key]: value })
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        appState.config = result.config;
+      }
+    } catch (error) {
+      console.error('Error saving quick setting:', error);
+    }
+  };
+  
+  randomizeSwitch.addEventListener('change', async () => {
+    const newValue = randomizeSwitch.checked;
+    await saveQuickSetting('randomize', newValue);
+    addLog(`Randomize media ${newValue ? 'enabled' : 'disabled'} (saved to database)`);
   });
   
-  loopSwitch.addEventListener('change', () => {
-    appState.config.loop = loopSwitch.checked;
-    addLog(`Loop playlist ${loopSwitch.checked ? 'enabled' : 'disabled'}`);
+  loopSwitch.addEventListener('change', async () => {
+    const newValue = loopSwitch.checked;
+    await saveQuickSetting('loop', newValue);
+    addLog(`Loop playlist ${newValue ? 'enabled' : 'disabled'} (saved to database)`);
   });
   
   // Refresh media files
