@@ -30,9 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const mediaView = document.getElementById('mediaView');
   const settingsView = document.getElementById('settingsView');
   const logsView = document.getElementById('logsView');
+  const dashboardBtn = document.getElementById('dashboardBtn');
   const mediaBtn = document.getElementById('mediaBtn');
   const settingsBtn = document.getElementById('settingsBtn');
   const logsBtn = document.getElementById('logsBtn');
+  const sidebarMenu = document.getElementById('sidebarMenu');
   
   // Socket.io connection
   const socket = io();
@@ -86,29 +88,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     if (view === dashboardView) {
-      document.querySelector('.nav-link:first-child').classList.add('active');
+      dashboardBtn.classList.add('active');
+    }
+  };
+
+  const collapseSidebar = () => {
+    if (window.innerWidth < 768 && sidebarMenu.classList.contains('show')) {
+      const bsCollapse = bootstrap.Collapse.getInstance(sidebarMenu);
+      if (bsCollapse) {
+        bsCollapse.hide();
+      }
     }
   };
   
   // UI Navigation event listeners
+  dashboardBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    showView(dashboardView);
+    dashboardBtn.classList.add('active');
+    collapseSidebar();
+  });
+
   mediaBtn.addEventListener('click', (e) => {
     e.preventDefault();
     showView(mediaView);
     mediaBtn.classList.add('active');
     loadMediaFiles();
+    collapseSidebar();
   });
-  
+
   settingsBtn.addEventListener('click', (e) => {
     e.preventDefault();
     showView(settingsView);
     settingsBtn.classList.add('active');
     loadSettings();
+    collapseSidebar();
   });
-  
+
   logsBtn.addEventListener('click', (e) => {
     e.preventDefault();
     showView(logsView);
     logsBtn.classList.add('active');
+    collapseSidebar();
   });
   
   // Update UI based on current state

@@ -87,11 +87,10 @@ main {
   line-height: 1.2;
 }
 
-/* Media Queries */
+/* Responsive tweaks */
 @media (max-width: 767.98px) {
   .sidebar {
-    position: static;
-    height: auto;
-    padding-top: 0;
+    top: 0;
+    padding-top: 4rem;
   }
-} 
+}
