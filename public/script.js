@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const refreshMediaBtn = document.getElementById('refreshMediaBtn');
   const clearLogsBtn = document.getElementById('clearLogsBtn');
   const settingsForm = document.getElementById('settingsForm');
+  const themeToggle = document.getElementById('themeToggle');
   
   // Navigation
   const dashboardView = document.getElementById('dashboardView');
@@ -31,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const mediaBtn = document.getElementById('mediaBtn');
   const settingsBtn = document.getElementById('settingsBtn');
   const logsBtn = document.getElementById('logsBtn');
+  const dashboardBtn = document.querySelector('[data-view="dashboardView"]');
   
   // Socket.io connection
   const socket = io();
@@ -70,44 +72,63 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   
   // View Navigation
-  const showView = (view) => {
-    dashboardView.classList.add('d-none');
-    mediaView.classList.add('d-none');
-    settingsView.classList.add('d-none');
-    logsView.classList.add('d-none');
-    
-    view.classList.remove('d-none');
-    
-    // Update active nav item
+  const showView = (view, activeLink) => {
+    [dashboardView, mediaView, settingsView, logsView].forEach(v => v.classList.add('hidden'));
+    view.classList.remove('hidden');
+
     document.querySelectorAll('.nav-link').forEach(link => {
-      link.classList.remove('active');
+      link.classList.remove('bg-gray-700');
     });
-    
-    if (view === dashboardView) {
-      document.querySelector('.nav-link:first-child').classList.add('active');
+
+    if (activeLink) {
+      activeLink.classList.add('bg-gray-700');
     }
   };
-  
+
   // UI Navigation event listeners
+  dashboardBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    showView(dashboardView, dashboardBtn);
+  });
+
   mediaBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    showView(mediaView);
-    mediaBtn.classList.add('active');
+    showView(mediaView, mediaBtn);
     loadMediaFiles();
   });
-  
+
   settingsBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    showView(settingsView);
-    settingsBtn.classList.add('active');
+    showView(settingsView, settingsBtn);
     loadSettings();
   });
-  
+
   logsBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    showView(logsView);
-    logsBtn.classList.add('active');
+    showView(logsView, logsBtn);
   });
+
+  // Set initial view
+  showView(dashboardView, dashboardBtn);
+
+  // Theme toggle
+  const setTheme = (theme) => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      themeToggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
+    } else {
+      document.documentElement.classList.remove('dark');
+      themeToggle.innerHTML = '<i class="bi bi-moon-fill"></i>';
+    }
+    localStorage.setItem('theme', theme);
+  };
+
+  themeToggle.addEventListener('click', () => {
+    const theme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+    setTheme(theme);
+  });
+
+  setTheme(localStorage.getItem('theme') || 'light');
   
   // Update UI based on current state
   const updateUI = () => {
@@ -115,33 +136,33 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Update UI components based on streaming status
     if (isStreaming) {
-      statusAlert.classList.remove('alert-secondary', 'alert-danger');
-      statusAlert.classList.add('alert-success');
+      statusAlert.className = 'mb-4 p-4 rounded bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100';
       statusAlert.textContent = 'Status: Streaming';
-      
+
       streamTitle.textContent = 'Streaming Active';
       streamStatus.textContent = 'The stream is currently running on YouTube.';
-      
-      streamIndicator.classList.add('stream-active');
-      streamIndicator.querySelector('.badge').classList.remove('bg-secondary');
-      streamIndicator.querySelector('.badge').classList.add('bg-success');
-      streamIndicator.querySelector('.badge').textContent = 'Online';
-      
+
+      const badge = streamIndicator.querySelector('span');
+      const dot = streamIndicator.querySelector('div');
+      badge.className = 'px-2 py-1 text-xs rounded bg-green-600 text-white mr-2';
+      badge.textContent = 'Online';
+      dot.className = 'w-3 h-3 rounded-full bg-green-600 animate-ping';
+
       startBtn.disabled = true;
       stopBtn.disabled = false;
     } else {
-      statusAlert.classList.remove('alert-success', 'alert-danger');
-      statusAlert.classList.add('alert-secondary');
+      statusAlert.className = 'mb-4 p-4 rounded bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
       statusAlert.textContent = 'Status: Not streaming';
-      
+
       streamTitle.textContent = 'Not Streaming';
       streamStatus.textContent = 'The stream is currently inactive.';
-      
-      streamIndicator.classList.remove('stream-active');
-      streamIndicator.querySelector('.badge').classList.remove('bg-success');
-      streamIndicator.querySelector('.badge').classList.add('bg-secondary');
-      streamIndicator.querySelector('.badge').textContent = 'Offline';
-      
+
+      const badge = streamIndicator.querySelector('span');
+      const dot = streamIndicator.querySelector('div');
+      badge.className = 'px-2 py-1 text-xs rounded bg-gray-500 text-white mr-2';
+      badge.textContent = 'Offline';
+      dot.className = 'w-3 h-3 rounded-full bg-gray-500';
+
       startBtn.disabled = false;
       stopBtn.disabled = true;
     }
@@ -159,8 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Show error message
   const showError = (message) => {
-    statusAlert.classList.remove('alert-secondary', 'alert-success');
-    statusAlert.classList.add('alert-danger');
+    statusAlert.className = 'mb-4 p-4 rounded bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-100';
     statusAlert.textContent = `Error: ${message}`;
   };
   
@@ -194,17 +214,17 @@ document.addEventListener('DOMContentLoaded', () => {
           const fileExtension = file.split('.').pop().toLowerCase();
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${file}</td>
-            <td>${fileExtension}</td>
-            <td><span class="badge bg-success">Ready</span></td>
+            <td class="px-2 py-1">${index + 1}</td>
+            <td class="px-2 py-1">${file}</td>
+            <td class="px-2 py-1">${fileExtension}</td>
+            <td class="px-2 py-1"><span class="px-2 py-1 text-xs rounded bg-green-600 text-white">Ready</span></td>
           `;
           mediaTableBody.appendChild(row);
         });
       }
     } catch (error) {
       console.error('Error loading media files:', error);
-      mediaTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading media files</td></tr>';
+      mediaTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-red-600">Error loading media files</td></tr>';
     }
   };
   
@@ -313,13 +333,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Show success message
         const successAlert = document.createElement('div');
-        successAlert.className = 'alert alert-success alert-dismissible fade show';
-        successAlert.innerHTML = `
-          <i class="bi bi-check-circle-fill"></i> Configuration saved successfully!
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+        successAlert.className = 'mb-4 p-2 rounded bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-100';
+        successAlert.innerHTML = `<i class="bi bi-check-circle-fill"></i> Configuration saved successfully!`;
         settingsForm.insertBefore(successAlert, settingsForm.firstChild);
-        
+
         // Auto-dismiss after 3 seconds
         setTimeout(() => {
           if (successAlert.parentNode) {
