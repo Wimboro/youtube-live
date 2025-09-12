@@ -14,8 +14,8 @@ const server = http.createServer(app);
 const io = socketIO(server);
 
 // Middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize database
@@ -197,6 +197,29 @@ app.get('/api/config', async (req, res) => {
   } catch (error) {
     console.error('Error getting config:', error);
     res.status(500).json({ error: 'Failed to load configuration' });
+  }
+});
+
+app.post('/api/media/upload', (req, res) => {
+  try {
+    const files = req.body.files;
+    if (!Array.isArray(files) || files.length === 0) {
+      return res.status(400).json({ success: false, error: 'No files provided' });
+    }
+
+    const saved = [];
+    files.forEach(f => {
+      const safeName = path.basename(f.name);
+      const filePath = path.join(currentConfig.mediaDirectory, safeName);
+      const buffer = Buffer.from(f.data, 'base64');
+      fs.writeFileSync(filePath, buffer);
+      saved.push(safeName);
+    });
+
+    res.json({ success: true, files: saved });
+  } catch (error) {
+    console.error('Error uploading media:', error);
+    res.status(500).json({ success: false, error: 'Failed to upload media files' });
   }
 });
 

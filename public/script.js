@@ -20,6 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggleStreamKey = document.getElementById('toggleStreamKey');
   const mediaTableBody = document.getElementById('mediaTableBody');
   const refreshMediaBtn = document.getElementById('refreshMediaBtn');
+  const mediaUploadInput = document.getElementById('mediaUploadInput');
+  const uploadMediaBtn = document.getElementById('uploadMediaBtn');
   const clearLogsBtn = document.getElementById('clearLogsBtn');
   const settingsForm = document.getElementById('settingsForm');
   const themeToggle = document.getElementById('themeToggle');
@@ -386,7 +388,57 @@ document.addEventListener('DOMContentLoaded', () => {
     await saveQuickSetting('loop', newValue);
     addLog(`Loop playlist ${newValue ? 'enabled' : 'disabled'} (saved to database)`);
   });
-  
+
+  mediaUploadInput.addEventListener('change', () => {
+    uploadMediaBtn.disabled = mediaUploadInput.files.length === 0;
+  });
+
+  uploadMediaBtn.addEventListener('click', async () => {
+    const files = mediaUploadInput.files;
+    if (!files.length) return;
+
+    uploadMediaBtn.disabled = true;
+
+    try {
+      const fileData = await Promise.all(Array.from(files).map(file => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = reader.result.split(',')[1];
+            resolve({ name: file.name, data: base64 });
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }));
+
+      const response = await fetch('/api/media/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ files: fileData })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        addLog(`${result.files.length} file(s) uploaded`);
+        mediaUploadInput.value = '';
+        loadMediaFiles();
+      } else {
+        addLog('Failed to upload media');
+        showError(result.error || 'Failed to upload media');
+      }
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      addLog(`Error uploading media: ${error.message}`);
+      showError('Error uploading media');
+    } finally {
+      mediaUploadInput.value = '';
+      uploadMediaBtn.disabled = true;
+    }
+  });
+
   // Refresh media files
   refreshMediaBtn.addEventListener('click', () => {
     loadMediaFiles();
@@ -431,4 +483,4 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize app
   initialize();
-}); 
+});
