@@ -65,9 +65,13 @@ class Database {
     return new Promise((resolve, reject) => {
       const defaults = [
         { key: 'streamKey', value: process.env.YOUTUBE_STREAM_KEY || '' },
+        { key: 'twitchStreamKey', value: process.env.TWITCH_STREAM_KEY || '' },
+        { key: 'facebookStreamKey', value: process.env.FACEBOOK_STREAM_KEY || '' },
         { key: 'mediaDirectory', value: process.env.MEDIA_DIRECTORY || './media' },
         { key: 'randomize', value: 'true' },
-        { key: 'loop', value: 'true' }
+        { key: 'loop', value: 'true' },
+        { key: 'platform', value: 'youtube' },
+        { key: 'multiPlatform', value: 'false' }
       ];
 
       let completed = 0;

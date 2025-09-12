@@ -5,9 +5,25 @@ const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
 const fs = require('fs');
-const { spawn } = require('child_process');
-const ffmpeg = require('fluent-ffmpeg');
+const { spawn, spawnSync } = require('child_process');
+const multer = require('multer');
 const Database = require('./database');
+
+// Resolve FFmpeg binary
+let ffmpegPath;
+try {
+  ffmpegPath = require('ffmpeg-static');
+} catch (err) {
+  ffmpegPath = 'ffmpeg';
+}
+
+let ffmpegAvailable = true;
+try {
+  spawnSync(ffmpegPath, ['-version']);
+} catch (error) {
+  ffmpegAvailable = false;
+  console.error('FFmpeg binary not found. Install FFmpeg or set the correct path.');
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -26,10 +42,28 @@ let streamProcess = null;
 let isStreaming = false;
 let currentConfig = {
   streamKey: process.env.YOUTUBE_STREAM_KEY || '',
+  twitchStreamKey: process.env.TWITCH_STREAM_KEY || '',
+  facebookStreamKey: process.env.FACEBOOK_STREAM_KEY || '',
   mediaDirectory: process.env.MEDIA_DIRECTORY || './media',
   randomize: true,
-  loop: true
+  loop: true,
+  platform: 'youtube', // youtube, twitch, facebook, multi
+  multiPlatform: false
 };
+
+// Configure file upload handling
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = currentConfig.mediaDirectory || path.join(__dirname, 'media');
+    fs.mkdirSync(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+
+const upload = multer({ storage });
 
 // Function to load configuration from database
 const loadConfigFromDatabase = async () => {
@@ -80,17 +114,71 @@ const getMediaFiles = () => {
   }
 };
 
-// Function to start YouTube stream
+// Get streaming endpoints for different platforms
+const getStreamingEndpoints = (config) => {
+  const endpoints = [];
+  
+  if (config.platform === 'youtube' || config.multiPlatform) {
+    if (config.streamKey) {
+      endpoints.push({
+        platform: 'youtube',
+        rtmp: `rtmp://a.rtmp.youtube.com/live2/${config.streamKey}`,
+        name: 'YouTube'
+      });
+    }
+  }
+  
+  if (config.platform === 'twitch' || config.multiPlatform) {
+    if (config.twitchStreamKey) {
+      endpoints.push({
+        platform: 'twitch',
+        rtmp: `rtmp://live.twitch.tv/app/${config.twitchStreamKey}`,
+        name: 'Twitch'
+      });
+    }
+  }
+  
+  if (config.platform === 'facebook' || config.multiPlatform) {
+    if (config.facebookStreamKey) {
+      endpoints.push({
+        platform: 'facebook',
+        rtmp: `rtmps://live-api-s.facebook.com:443/rtmp/${config.facebookStreamKey}`,
+        name: 'Facebook'
+      });
+    }
+  }
+  
+  return endpoints;
+};
+
+// Function to start multi-platform stream
 const startStream = (config) => {
+  if (!ffmpegAvailable) {
+    io.emit('stream-status', {
+      status: 'error',
+      message: 'FFmpeg binary not found on server'
+    });
+    return false;
+  }
+
   if (isStreaming) {
     stopStream();
   }
-  
+
   const mediaFiles = getMediaFiles();
   if (mediaFiles.length === 0) {
+    io.emit('stream-status', {
+      status: 'error',
+      message: 'No media files found in directory'
+    });
+    return false;
+  }
+
+  const endpoints = getStreamingEndpoints(config);
+  if (endpoints.length === 0) {
     io.emit('stream-status', { 
       status: 'error', 
-      message: 'No media files found in directory' 
+      message: 'No valid stream keys configured for selected platform(s)' 
     });
     return false;
   }
@@ -106,17 +194,8 @@ const startStream = (config) => {
     const playlistContent = files.map(file => `file '${file}'`).join('\n');
     fs.writeFileSync(playlistPath, playlistContent);
     
-    // FFmpeg command for streaming to YouTube
-    const streamKey = config.streamKey || '';
-    if (!streamKey) {
-      io.emit('stream-status', { 
-        status: 'error', 
-        message: 'YouTube stream key is required' 
-      });
-      return false;
-    }
-    
-    const args = [
+    // Base FFmpeg arguments
+    let args = [
       '-re',
       '-f', 'concat',
       '-safe', '0',
@@ -130,16 +209,32 @@ const startStream = (config) => {
       '-g', '60',
       '-c:a', 'aac',
       '-b:a', '128k',
-      '-ar', '44100',
-      '-f', 'flv',
-      `rtmp://a.rtmp.youtube.com/live2/${streamKey}`
+      '-ar', '44100'
     ];
     
     if (config.loop) {
       args.unshift('-stream_loop', '-1');
     }
+
+    // Add outputs for each platform
+    endpoints.forEach((endpoint, index) => {
+      args.push('-f', 'flv');
+      args.push(endpoint.rtmp);
+    });
+
+    console.log(`Starting stream to ${endpoints.length} platform(s): ${endpoints.map(e => e.name).join(', ')}`);
+    io.emit('stream-status', { 
+      status: 'starting', 
+      message: `Starting stream to: ${endpoints.map(e => e.name).join(', ')}` 
+    });
     
-    streamProcess = spawn('ffmpeg', args);
+    streamProcess = spawn(ffmpegPath, args);
+
+    streamProcess.on('error', (err) => {
+      console.error('Failed to start FFmpeg:', err);
+      isStreaming = false;
+      io.emit('stream-status', { status: 'error', message: 'Failed to start FFmpeg' });
+    });
     
     streamProcess.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`);
@@ -184,6 +279,10 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('/watch', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'watch.html'));
+});
+
 app.get('/api/config', async (req, res) => {
   try {
     // Reload config from database to ensure we have the latest
@@ -198,6 +297,28 @@ app.get('/api/config', async (req, res) => {
     console.error('Error getting config:', error);
     res.status(500).json({ error: 'Failed to load configuration' });
   }
+});
+
+// Route for uploading media files
+app.post('/api/media/upload', upload.single('mediaFile'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'No file uploaded' });
+  }
+  res.json({ success: true, filename: req.file.filename });
+});
+
+// Route for deleting media files
+app.delete('/api/media/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(currentConfig.mediaDirectory, filename);
+
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error('Error deleting media file:', err);
+      return res.status(500).json({ success: false, error: 'Failed to delete file' });
+    }
+    res.json({ success: true });
+  });
 });
 
 // New route for saving configuration

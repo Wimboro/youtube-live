@@ -12,14 +12,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const configMediaCount = document.getElementById('configMediaCount');
   const mediaPathDisplay = document.getElementById('mediaPathDisplay');
   const streamKeyInput = document.getElementById('streamKeyInput');
+  const twitchStreamKeyInput = document.getElementById('twitchStreamKeyInput');
+  const facebookStreamKeyInput = document.getElementById('facebookStreamKeyInput');
   const mediaDirectoryInput = document.getElementById('mediaDirectoryInput');
   const randomizeCheckbox = document.getElementById('randomizeCheckbox');
   const loopCheckbox = document.getElementById('loopCheckbox');
   const randomizeSwitch = document.getElementById('randomizeSwitch');
   const loopSwitch = document.getElementById('loopSwitch');
   const toggleStreamKey = document.getElementById('toggleStreamKey');
+  const toggleTwitchStreamKey = document.getElementById('toggleTwitchStreamKey');
+  const toggleFacebookStreamKey = document.getElementById('toggleFacebookStreamKey');
+  const platformSelect = document.getElementById('platformSelect');
+  const multiPlatformSwitch = document.getElementById('multiPlatformSwitch');
+  const youtubeSettings = document.getElementById('youtubeSettings');
+  const twitchSettings = document.getElementById('twitchSettings');
+  const facebookSettings = document.getElementById('facebookSettings');
   const mediaTableBody = document.getElementById('mediaTableBody');
   const refreshMediaBtn = document.getElementById('refreshMediaBtn');
+  const mediaUploadInput = document.getElementById('mediaUploadInput');
+  const uploadMediaBtn = document.getElementById('uploadMediaBtn');
   const clearLogsBtn = document.getElementById('clearLogsBtn');
   const settingsForm = document.getElementById('settingsForm');
   
@@ -28,9 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const mediaView = document.getElementById('mediaView');
   const settingsView = document.getElementById('settingsView');
   const logsView = document.getElementById('logsView');
+  const dashboardBtn = document.getElementById('dashboardBtn');
   const mediaBtn = document.getElementById('mediaBtn');
   const settingsBtn = document.getElementById('settingsBtn');
   const logsBtn = document.getElementById('logsBtn');
+  const sidebarMenu = document.getElementById('sidebarMenu');
   
   // Socket.io connection
   const socket = io();
@@ -40,12 +53,23 @@ document.addEventListener('DOMContentLoaded', () => {
     isStreaming: false,
     config: {
       streamKey: '',
+      twitchStreamKey: '',
+      facebookStreamKey: '',
       mediaDirectory: './media',
       randomize: true,
-      loop: true
+      loop: true,
+      platform: 'youtube',
+      multiPlatform: false
     },
     mediaFiles: [],
-    logs: []
+    logs: [],
+    analytics: {
+      viewerCount: 0,
+      streamDuration: 0,
+      peakViewers: 0,
+      chatMessages: 0,
+      streamStartTime: null
+    }
   };
   
   // Initialize and fetch config
@@ -84,31 +108,79 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     if (view === dashboardView) {
-      document.querySelector('.nav-link:first-child').classList.add('active');
+      dashboardBtn.classList.add('active');
+    }
+  };
+
+  const collapseSidebar = () => {
+    if (window.innerWidth < 768 && sidebarMenu.classList.contains('show')) {
+      const bsCollapse = bootstrap.Collapse.getInstance(sidebarMenu);
+      if (bsCollapse) {
+        bsCollapse.hide();
+      }
     }
   };
   
   // UI Navigation event listeners
+  dashboardBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    showView(dashboardView);
+    dashboardBtn.classList.add('active');
+    collapseSidebar();
+  });
+
   mediaBtn.addEventListener('click', (e) => {
     e.preventDefault();
     showView(mediaView);
     mediaBtn.classList.add('active');
     loadMediaFiles();
+    collapseSidebar();
   });
-  
+
   settingsBtn.addEventListener('click', (e) => {
     e.preventDefault();
     showView(settingsView);
     settingsBtn.classList.add('active');
     loadSettings();
+    collapseSidebar();
   });
-  
+
   logsBtn.addEventListener('click', (e) => {
     e.preventDefault();
     showView(logsView);
     logsBtn.classList.add('active');
+    collapseSidebar();
   });
   
+  // Update analytics
+  const updateAnalytics = () => {
+    if (appState.isStreaming) {
+      // Simulate viewer count fluctuation
+      appState.analytics.viewerCount = Math.floor(Math.random() * 100) + 50;
+      if (appState.analytics.viewerCount > appState.analytics.peakViewers) {
+        appState.analytics.peakViewers = appState.analytics.viewerCount;
+      }
+      
+      // Update chat messages
+      appState.analytics.chatMessages += Math.floor(Math.random() * 3);
+      
+      // Update duration
+      if (appState.analytics.streamStartTime) {
+        const now = new Date();
+        const diff = Math.floor((now - appState.analytics.streamStartTime) / 1000);
+        const hours = Math.floor(diff / 3600);
+        const minutes = Math.floor((diff % 3600) / 60);
+        document.getElementById('streamDuration').textContent = 
+          `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      }
+    }
+    
+    // Update analytics display
+    document.getElementById('viewerCount').textContent = appState.analytics.viewerCount;
+    document.getElementById('peakViewers').textContent = appState.analytics.peakViewers;
+    document.getElementById('chatMessages').textContent = appState.analytics.chatMessages;
+  };
+
   // Update UI based on current state
   const updateUI = () => {
     const { isStreaming, config, mediaFiles } = appState;
@@ -117,7 +189,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isStreaming) {
       statusAlert.classList.remove('alert-secondary', 'alert-danger');
       statusAlert.classList.add('alert-success');
-      statusAlert.textContent = 'Status: Streaming';
+      statusAlert.innerHTML = '<i class="bi bi-broadcast"></i> Status: Live Streaming';
+      
+      if (!appState.analytics.streamStartTime) {
+        appState.analytics.streamStartTime = new Date();
+      }
       
       streamTitle.textContent = 'Streaming Active';
       streamStatus.textContent = 'The stream is currently running on YouTube.';
@@ -132,7 +208,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       statusAlert.classList.remove('alert-success', 'alert-danger');
       statusAlert.classList.add('alert-secondary');
-      statusAlert.textContent = 'Status: Not streaming';
+      statusAlert.innerHTML = '<i class="bi bi-broadcast"></i> Status: Not streaming';
+      
+      appState.analytics.streamStartTime = null;
+      appState.analytics.streamDuration = 0;
       
       streamTitle.textContent = 'Not Streaming';
       streamStatus.textContent = 'The stream is currently inactive.';
@@ -155,6 +234,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update quick settings
     randomizeSwitch.checked = config.randomize;
     loopSwitch.checked = config.loop;
+    
+    // Update analytics
+    updateAnalytics();
   };
   
   // Show error message
@@ -187,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Update media table
       if (appState.mediaFiles.length === 0) {
-        mediaTableBody.innerHTML = '<tr><td colspan="4" class="text-center">No media files found</td></tr>';
+        mediaTableBody.innerHTML = '<tr><td colspan="6" class="text-center">No media files found</td></tr>';
       } else {
         mediaTableBody.innerHTML = '';
         appState.mediaFiles.forEach((file, index) => {
@@ -195,27 +277,156 @@ document.addEventListener('DOMContentLoaded', () => {
           const row = document.createElement('tr');
           row.innerHTML = `
             <td>${index + 1}</td>
-            <td>${file}</td>
-            <td>${fileExtension}</td>
+            <td>
+              <div class="thumbnail-preview">
+                <i class="bi bi-film"></i>
+                <div style="font-size: 0.6rem;">${fileExtension.toUpperCase()}</div>
+              </div>
+            </td>
+            <td>
+              <div>
+                <div class="fw-bold">${file}</div>
+                <small class="text-muted">Video file</small>
+              </div>
+            </td>
+            <td><span class="badge bg-secondary">${fileExtension.toUpperCase()}</span></td>
             <td><span class="badge bg-success">Ready</span></td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-info preview-media-btn" data-filename="${file}" title="Preview">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-outline-danger delete-media-btn" data-filename="${file}" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
           `;
           mediaTableBody.appendChild(row);
+        });
+
+        // Add event listeners for delete buttons
+        document.querySelectorAll('.delete-media-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const filename = btn.dataset.filename;
+            if (!confirm(`Delete ${filename}?`)) return;
+
+            try {
+              const response = await fetch(`/api/media/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+              const result = await response.json();
+              if (result.success) {
+                addLog(`Deleted ${filename}`);
+                loadMediaFiles();
+              } else {
+                showError(result.error || 'Failed to delete file');
+              }
+            } catch (error) {
+              console.error('Error deleting media file:', error);
+              showError('Error deleting media file');
+            }
+          });
+        });
+
+        // Add event listeners for preview buttons
+        document.querySelectorAll('.preview-media-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const filename = btn.dataset.filename;
+            showMediaPreview(filename);
+          });
         });
       }
     } catch (error) {
       console.error('Error loading media files:', error);
-      mediaTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading media files</td></tr>';
+      mediaTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading media files</td></tr>';
     }
   };
+
+  // Show media preview
+  const showMediaPreview = (filename) => {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title"><i class="bi bi-film"></i> Preview: ${filename}</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body text-center">
+            <div class="video-player-container mb-3">
+              <div class="d-flex align-items-center justify-content-center h-100">
+                <div class="text-center">
+                  <i class="bi bi-play-circle" style="font-size: 4rem; color: #666;"></i>
+                  <p class="mt-3 text-muted">Video Preview</p>
+                  <small class="text-muted">In a full implementation, this would show the actual video</small>
+                </div>
+              </div>
+            </div>
+            <p class="text-muted">
+              <i class="bi bi-info-circle"></i> 
+              This video will be included in the streaming playlist when randomization is enabled.
+            </p>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    modal.addEventListener('hidden.bs.modal', () => {
+      modal.remove();
+    });
+  };
   
+  // Update platform settings visibility
+  const updatePlatformSettings = () => {
+    const platform = platformSelect.value;
+    const isMulti = multiPlatformSwitch.checked;
+    
+    // Hide all settings first
+    youtubeSettings.style.display = 'none';
+    twitchSettings.style.display = 'none';
+    facebookSettings.style.display = 'none';
+    
+    // Show relevant settings
+    if (platform === 'youtube' || isMulti) {
+      youtubeSettings.style.display = 'block';
+    }
+    if (platform === 'twitch' || isMulti) {
+      twitchSettings.style.display = 'block';
+    }
+    if (platform === 'facebook' || isMulti) {
+      facebookSettings.style.display = 'block';
+    }
+    
+    // Update multi-platform switch based on platform selection
+    if (platform === 'multi') {
+      multiPlatformSwitch.checked = true;
+      youtubeSettings.style.display = 'block';
+      twitchSettings.style.display = 'block';
+      facebookSettings.style.display = 'block';
+    }
+  };
+
   // Load settings
   const loadSettings = () => {
     const { config } = appState;
     
     streamKeyInput.value = config.streamKey || '';
+    twitchStreamKeyInput.value = config.twitchStreamKey || '';
+    facebookStreamKeyInput.value = config.facebookStreamKey || '';
     mediaDirectoryInput.value = config.mediaDirectory || './media';
     randomizeCheckbox.checked = config.randomize;
     loopCheckbox.checked = config.loop;
+    platformSelect.value = config.platform || 'youtube';
+    multiPlatformSwitch.checked = config.multiPlatform || false;
+    
+    updatePlatformSettings();
   };
   
   // Start streaming
@@ -283,6 +494,35 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleStreamKey.innerHTML = '<i class="bi bi-eye"></i>';
     }
   });
+
+  toggleTwitchStreamKey.addEventListener('click', () => {
+    if (twitchStreamKeyInput.type === 'password') {
+      twitchStreamKeyInput.type = 'text';
+      toggleTwitchStreamKey.innerHTML = '<i class="bi bi-eye-slash"></i>';
+    } else {
+      twitchStreamKeyInput.type = 'password';
+      toggleTwitchStreamKey.innerHTML = '<i class="bi bi-eye"></i>';
+    }
+  });
+
+  toggleFacebookStreamKey.addEventListener('click', () => {
+    if (facebookStreamKeyInput.type === 'password') {
+      facebookStreamKeyInput.type = 'text';
+      toggleFacebookStreamKey.innerHTML = '<i class="bi bi-eye-slash"></i>';
+    } else {
+      facebookStreamKeyInput.type = 'password';
+      toggleFacebookStreamKey.innerHTML = '<i class="bi bi-eye"></i>';
+    }
+  });
+
+  // Platform selection changes
+  platformSelect.addEventListener('change', () => {
+    updatePlatformSettings();
+  });
+
+  multiPlatformSwitch.addEventListener('change', () => {
+    updatePlatformSettings();
+  });
   
   // Save settings
   settingsForm.addEventListener('submit', async (e) => {
@@ -290,9 +530,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const newConfig = {
       streamKey: streamKeyInput.value,
+      twitchStreamKey: twitchStreamKeyInput.value,
+      facebookStreamKey: facebookStreamKeyInput.value,
       mediaDirectory: mediaDirectoryInput.value || './media',
       randomize: randomizeCheckbox.checked,
-      loop: loopCheckbox.checked
+      loop: loopCheckbox.checked,
+      platform: platformSelect.value,
+      multiPlatform: multiPlatformSwitch.checked
     };
     
     try {
@@ -375,6 +619,37 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMediaFiles();
     addLog('Media files refreshed');
   });
+
+  // Upload media files
+  uploadMediaBtn.addEventListener('click', async () => {
+    const file = mediaUploadInput.files[0];
+    if (!file) {
+      showError('Please select a media file to upload');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('mediaFile', file);
+
+    try {
+      const response = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        addLog(`Uploaded ${result.filename}`);
+        mediaUploadInput.value = '';
+        loadMediaFiles();
+      } else {
+        showError(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      showError('Error uploading media');
+    }
+  });
   
   // Clear logs
   clearLogsBtn.addEventListener('click', () => {
@@ -412,6 +687,13 @@ document.addEventListener('DOMContentLoaded', () => {
     addLog(message);
   });
   
+  // Start analytics update timer
+  setInterval(() => {
+    if (appState.isStreaming) {
+      updateAnalytics();
+    }
+  }, 5000);
+
   // Initialize app
   initialize();
 }); 
