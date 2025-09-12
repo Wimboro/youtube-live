@@ -5,9 +5,25 @@ const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
 const fs = require('fs');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const multer = require('multer');
 const Database = require('./database');
+
+// Resolve FFmpeg binary
+let ffmpegPath;
+try {
+  ffmpegPath = require('ffmpeg-static');
+} catch (err) {
+  ffmpegPath = 'ffmpeg';
+}
+
+let ffmpegAvailable = true;
+try {
+  spawnSync(ffmpegPath, ['-version']);
+} catch (error) {
+  ffmpegAvailable = false;
+  console.error('FFmpeg binary not found. Install FFmpeg or set the correct path.');
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -96,15 +112,23 @@ const getMediaFiles = () => {
 
 // Function to start YouTube stream
 const startStream = (config) => {
+  if (!ffmpegAvailable) {
+    io.emit('stream-status', {
+      status: 'error',
+      message: 'FFmpeg binary not found on server'
+    });
+    return false;
+  }
+
   if (isStreaming) {
     stopStream();
   }
-  
+
   const mediaFiles = getMediaFiles();
   if (mediaFiles.length === 0) {
-    io.emit('stream-status', { 
-      status: 'error', 
-      message: 'No media files found in directory' 
+    io.emit('stream-status', {
+      status: 'error',
+      message: 'No media files found in directory'
     });
     return false;
   }
@@ -153,7 +177,13 @@ const startStream = (config) => {
       args.unshift('-stream_loop', '-1');
     }
     
-    streamProcess = spawn('ffmpeg', args);
+    streamProcess = spawn(ffmpegPath, args);
+
+    streamProcess.on('error', (err) => {
+      console.error('Failed to start FFmpeg:', err);
+      isStreaming = false;
+      io.emit('stream-status', { status: 'error', message: 'Failed to start FFmpeg' });
+    });
     
     streamProcess.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`);

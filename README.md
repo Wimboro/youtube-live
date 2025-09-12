@@ -51,6 +51,23 @@ A web application that allows you to easily manage 24/7 YouTube live streaming w
 
 6. Open your web browser and navigate to `http://localhost:3001`
 
+## Docker
+
+You can run the application in a container with FFmpeg preinstalled.
+
+1. Build the image:
+   ```
+   docker build -t youtube-live .
+   ```
+2. Run the container:
+   ```
+   docker run -p 3001:3001 \
+     -v $(pwd)/media:/app/media \
+     -v $(pwd)/stream_config.db:/app/stream_config.db \
+     youtube-live
+   ```
+   FFmpeg is installed inside the image, so no host setup is required.
+
 ## Usage
 
 1. **Configuration**: 
