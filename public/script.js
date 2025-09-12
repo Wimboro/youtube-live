@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Update media table
       if (appState.mediaFiles.length === 0) {
-        mediaTableBody.innerHTML = '<tr><td colspan="4" class="text-center">No media files found</td></tr>';
+        mediaTableBody.innerHTML = '<tr><td colspan="5" class="text-center">No media files found</td></tr>';
       } else {
         mediaTableBody.innerHTML = '';
         appState.mediaFiles.forEach((file, index) => {
@@ -220,13 +220,37 @@ document.addEventListener('DOMContentLoaded', () => {
             <td class="px-2 py-1">${file}</td>
             <td class="px-2 py-1">${fileExtension}</td>
             <td class="px-2 py-1"><span class="px-2 py-1 text-xs rounded bg-green-600 text-white">Ready</span></td>
+            <td class="px-2 py-1"><button class="delete-media text-red-600 hover:text-red-800" data-file="${file}"><i class="bi bi-trash"></i></button></td>
           `;
+          const delBtn = row.querySelector('.delete-media');
+          delBtn.addEventListener('click', () => deleteMediaFile(file));
           mediaTableBody.appendChild(row);
         });
       }
+      updateUI();
     } catch (error) {
       console.error('Error loading media files:', error);
-      mediaTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-red-600">Error loading media files</td></tr>';
+      mediaTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-red-600">Error loading media files</td></tr>';
+    }
+  };
+
+  const deleteMediaFile = async (filename) => {
+    try {
+      const response = await fetch(`/api/media/${encodeURIComponent(filename)}`, {
+        method: 'DELETE'
+      });
+      const result = await response.json();
+      if (result.success) {
+        addLog(`Deleted media: ${filename}`);
+        loadMediaFiles();
+      } else {
+        addLog('Failed to delete media');
+        showError(result.error || 'Failed to delete media');
+      }
+    } catch (error) {
+      console.error('Error deleting media:', error);
+      addLog(`Error deleting media: ${error.message}`);
+      showError('Error deleting media');
     }
   };
   

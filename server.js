@@ -223,6 +223,22 @@ app.post('/api/media/upload', (req, res) => {
   }
 });
 
+app.delete('/api/media/:filename', (req, res) => {
+  try {
+    const file = path.basename(req.params.filename);
+    const filePath = path.join(currentConfig.mediaDirectory, file);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      res.json({ success: true, file });
+    } else {
+      res.status(404).json({ success: false, error: 'File not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting media:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete media file' });
+  }
+});
+
 // New route for saving configuration
 app.post('/api/config/save', async (req, res) => {
   try {
