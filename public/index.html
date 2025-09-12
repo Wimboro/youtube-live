@@ -9,8 +9,15 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-    <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">YouTube Live</a>
+  <header class="navbar navbar-dark sticky-top youtube-header flex-md-nowrap p-0 shadow">
+    <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">
+      <i class="bi bi-youtube text-danger me-2"></i>YouTube Live Studio
+    </a>
+    <div class="d-flex align-items-center me-3">
+      <a href="/watch" target="_blank" class="btn btn-outline-light btn-sm me-2">
+        <i class="bi bi-eye"></i> Watch Stream
+      </a>
+    </div>
     <button class="navbar-toggler position-absolute d-md-none collapsed top-0 end-0 m-2" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -18,7 +25,7 @@
   <div class="container-fluid">
     <div class="row">
       <!-- Sidebar -->
-      <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+      <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block youtube-sidebar sidebar collapse">
         <div class="position-sticky pt-3">
           <h5 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-light">
             <span>YouTube Live</span>
@@ -43,6 +50,12 @@
               </a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" href="#" id="schedulerBtn">
+                <i class="bi bi-calendar-event me-2"></i>
+                Scheduler
+              </a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" href="#" id="logsBtn">
                 <i class="bi bi-terminal me-2"></i>
                 Stream Logs
@@ -53,20 +66,20 @@
       </nav>
 
       <!-- Main Content -->
-      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
           <h1 class="h2">YouTube 24/7 Live Streamer</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-              <button type="button" id="startBtn" class="btn btn-success"><i class="bi bi-play-fill"></i> Start Streaming</button>
-              <button type="button" id="stopBtn" class="btn btn-danger"><i class="bi bi-stop-fill"></i> Stop Streaming</button>
+              <button type="button" id="startBtn" class="btn btn-youtube"><i class="bi bi-play-fill"></i> Go Live</button>
+              <button type="button" id="stopBtn" class="btn btn-outline-danger"><i class="bi bi-stop-fill"></i> End Stream</button>
             </div>
           </div>
         </div>
 
         <!-- Status Indicator -->
-        <div class="alert alert-secondary" id="statusAlert" role="alert">
-          Status: Not streaming
+        <div class="alert alert-dark" id="statusAlert" role="alert">
+          <i class="bi bi-broadcast"></i> Status: Not streaming
         </div>
 
         <!-- Main Dashboard -->
@@ -104,24 +117,60 @@
             </div>
           </div>
 
+          <!-- Stream Analytics -->
+          <div class="row mb-4">
+            <div class="col-md-3">
+              <div class="card stats-card">
+                <div class="card-body text-center">
+                  <div class="stats-number" id="viewerCount">0</div>
+                  <div class="stats-label">Live Viewers</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card">
+                <div class="card-body text-center">
+                  <div class="stats-number text-primary" id="streamDuration">00:00</div>
+                  <div class="stats-label">Stream Duration</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card">
+                <div class="card-body text-center">
+                  <div class="stats-number text-success" id="peakViewers">0</div>
+                  <div class="stats-label">Peak Viewers</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card">
+                <div class="card-body text-center">
+                  <div class="stats-number text-info" id="chatMessages">0</div>
+                  <div class="stats-label">Chat Messages</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="row">
             <div class="col-md-6">
               <div class="card mb-4">
                 <div class="card-header">
-                  Current Configuration
+                  <i class="bi bi-gear-fill"></i> Current Configuration
                 </div>
                 <div class="card-body">
                   <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                      Stream Key
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-secondary">
+                      <span><i class="bi bi-key"></i> Stream Key</span>
                       <span class="badge bg-primary rounded-pill" id="configStreamKey">•••••••••••</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                      Media Folder
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-secondary">
+                      <span><i class="bi bi-folder"></i> Media Folder</span>
                       <span class="badge bg-primary rounded-pill" id="configMediaDir">./media</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                      Media Files
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-secondary">
+                      <span><i class="bi bi-film"></i> Media Files</span>
                       <span class="badge bg-primary rounded-pill" id="configMediaCount">0</span>
                     </li>
                   </ul>
@@ -132,14 +181,24 @@
             <div class="col-md-6">
               <div class="card mb-4">
                 <div class="card-header">
-                  Stream Preview
+                  <i class="bi bi-display"></i> Stream Preview
                 </div>
                 <div class="card-body text-center">
-                  <div class="stream-preview">
-                    <i class="bi bi-youtube" style="font-size: 3rem; color: red;"></i>
-                    <p class="mt-3">Visit your YouTube Live Dashboard to view the live stream.</p>
-                    <a href="https://studio.youtube.com/channel/live" target="_blank" class="btn btn-outline-danger mt-2">
-                      <i class="bi bi-youtube"></i> YouTube Studio
+                  <div class="video-player-container mb-3">
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                      <div class="text-center">
+                        <i class="bi bi-youtube" style="font-size: 4rem; color: #ff0000;"></i>
+                        <p class="mt-3 mb-0">Stream Preview</p>
+                        <small class="text-muted">Live stream will appear here when active</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="d-grid gap-2">
+                    <a href="https://studio.youtube.com/channel/live" target="_blank" class="btn btn-youtube">
+                      <i class="bi bi-youtube"></i> Open YouTube Studio
+                    </a>
+                    <a href="/watch" target="_blank" class="btn btn-outline-light">
+                      <i class="bi bi-eye"></i> View as Viewer
                     </a>
                   </div>
                 </div>
@@ -168,10 +227,11 @@
                 </div>
               </div>
               <div class="table-responsive">
-                <table class="table table-striped table-sm">
+                <table class="table table-dark table-striped table-sm">
                   <thead>
                     <tr>
                       <th scope="col">#</th>
+                      <th scope="col">Preview</th>
                       <th scope="col">Filename</th>
                       <th scope="col">Type</th>
                       <th scope="col">Status</th>
@@ -180,7 +240,7 @@
                   </thead>
                   <tbody id="mediaTableBody">
                     <tr>
-                      <td colspan="5" class="text-center">No media files found</td>
+                      <td colspan="6" class="text-center">No media files found</td>
                     </tr>
                   </tbody>
                 </table>
@@ -202,15 +262,66 @@
             </div>
             <div class="card-body">
               <form id="settingsForm">
-                <div class="mb-3">
-                  <label for="streamKeyInput" class="form-label">YouTube Stream Key</label>
+                <div class="mb-4">
+                  <label class="form-label">Streaming Platform</label>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <select class="form-select mb-3" id="platformSelect">
+                        <option value="youtube">YouTube Only</option>
+                        <option value="twitch">Twitch Only</option>
+                        <option value="facebook">Facebook Only</option>
+                        <option value="multi">Multi-Platform</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="multiPlatformSwitch">
+                        <label class="form-check-label" for="multiPlatformSwitch">Enable Multi-Platform Streaming</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- YouTube Settings -->
+                <div class="mb-3" id="youtubeSettings">
+                  <label for="streamKeyInput" class="form-label">
+                    <i class="bi bi-youtube text-danger"></i> YouTube Stream Key
+                  </label>
                   <div class="input-group">
-                    <input type="password" class="form-control" id="streamKeyInput" placeholder="Enter your YouTube stream key" required>
+                    <input type="password" class="form-control" id="streamKeyInput" placeholder="Enter your YouTube stream key">
                     <button class="btn btn-outline-secondary" type="button" id="toggleStreamKey">
                       <i class="bi bi-eye"></i>
                     </button>
                   </div>
                   <div class="form-text">Find your stream key in the YouTube Studio's "Stream" tab.</div>
+                </div>
+
+                <!-- Twitch Settings -->
+                <div class="mb-3" id="twitchSettings" style="display: none;">
+                  <label for="twitchStreamKeyInput" class="form-label">
+                    <i class="bi bi-twitch" style="color: #9146ff;"></i> Twitch Stream Key
+                  </label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="twitchStreamKeyInput" placeholder="Enter your Twitch stream key">
+                    <button class="btn btn-outline-secondary" type="button" id="toggleTwitchStreamKey">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </div>
+                  <div class="form-text">Get your stream key from Twitch Creator Dashboard > Settings > Stream.</div>
+                </div>
+
+                <!-- Facebook Settings -->
+                <div class="mb-3" id="facebookSettings" style="display: none;">
+                  <label for="facebookStreamKeyInput" class="form-label">
+                    <i class="bi bi-facebook" style="color: #1877f2;"></i> Facebook Stream Key
+                  </label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="facebookStreamKeyInput" placeholder="Enter your Facebook stream key">
+                    <button class="btn btn-outline-secondary" type="button" id="toggleFacebookStreamKey">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </div>
+                  <div class="form-text">Get your stream key from Facebook Creator Studio > Live.</div>
                 </div>
                 <div class="mb-3">
                   <label for="mediaDirectoryInput" class="form-label">Media Directory</label>
@@ -225,6 +336,74 @@
                   <input type="checkbox" class="form-check-input" id="loopCheckbox" checked>
                   <label class="form-check-label" for="loopCheckbox">Loop Playlist</label>
                 </div>
+
+                <!-- Stream Scheduling -->
+                <div class="mb-4">
+                  <h5><i class="bi bi-calendar-event"></i> Stream Scheduling</h5>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="enableScheduling">
+                        <label class="form-check-label" for="enableScheduling">Enable Automatic Scheduling</label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="enable247">
+                        <label class="form-check-label" for="enable247">24/7 Streaming</label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div id="schedulingOptions" style="display: none;">
+                    <div class="row">
+                      <div class="col-md-6">
+                        <label for="startTime" class="form-label">Daily Start Time</label>
+                        <input type="time" class="form-control" id="startTime" value="08:00">
+                      </div>
+                      <div class="col-md-6">
+                        <label for="endTime" class="form-label">Daily End Time</label>
+                        <input type="time" class="form-control" id="endTime" value="22:00">
+                      </div>
+                    </div>
+                    <div class="mt-3">
+                      <label class="form-label">Active Days</label>
+                      <div class="row">
+                        <div class="col-md-12">
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="dayMon" value="1" checked>
+                            <label class="form-check-label" for="dayMon">Mon</label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="dayTue" value="2" checked>
+                            <label class="form-check-label" for="dayTue">Tue</label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="dayWed" value="3" checked>
+                            <label class="form-check-label" for="dayWed">Wed</label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="dayThu" value="4" checked>
+                            <label class="form-check-label" for="dayThu">Thu</label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="dayFri" value="5" checked>
+                            <label class="form-check-label" for="dayFri">Fri</label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="daySat" value="6" checked>
+                            <label class="form-check-label" for="daySat">Sat</label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="daySun" value="0" checked>
+                            <label class="form-check-label" for="daySun">Sun</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <button type="submit" class="btn btn-primary">
                   <i class="bi bi-floppy"></i> Save Settings to Database
                 </button>
@@ -236,6 +415,124 @@
           </div>
         </div>
         
+        <!-- Scheduler View -->
+        <div id="schedulerView" class="d-none">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="card mb-4">
+                <div class="card-header">
+                  <i class="bi bi-calendar-week"></i> Stream Schedule
+                </div>
+                <div class="card-body">
+                  <div id="scheduleCalendar">
+                    <div class="table-responsive">
+                      <table class="table table-dark table-striped">
+                        <thead>
+                          <tr>
+                            <th>Time</th>
+                            <th>Monday</th>
+                            <th>Tuesday</th>
+                            <th>Wednesday</th>
+                            <th>Thursday</th>
+                            <th>Friday</th>
+                            <th>Saturday</th>
+                            <th>Sunday</th>
+                          </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody">
+                          <!-- Schedule will be populated here -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div class="mt-3">
+                    <div class="d-flex align-items-center">
+                      <span class="badge bg-success me-2">●</span>
+                      <span class="me-3">Scheduled Stream</span>
+                      <span class="badge bg-danger me-2">●</span>
+                      <span class="me-3">Currently Live</span>
+                      <span class="badge bg-secondary me-2">●</span>
+                      <span>Offline</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4">
+              <div class="card mb-4">
+                <div class="card-header">
+                  <i class="bi bi-clock"></i> Next Scheduled Stream
+                </div>
+                <div class="card-body text-center">
+                  <div class="stats-number text-primary" id="nextStreamTime">--:--</div>
+                  <div class="stats-label" id="nextStreamDate">Not scheduled</div>
+                  <hr>
+                  <div class="d-grid gap-2">
+                    <button class="btn btn-outline-success" id="scheduleNowBtn">
+                      <i class="bi bi-play-circle"></i> Start Stream Now
+                    </button>
+                    <button class="btn btn-outline-warning" id="skipNextBtn">
+                      <i class="bi bi-skip-forward"></i> Skip Next Stream
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card mb-4">
+                <div class="card-header">
+                  <i class="bi bi-gear"></i> Quick Schedule Settings
+                </div>
+                <div class="card-body">
+                  <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="quickEnable247">
+                    <label class="form-check-label" for="quickEnable247">24/7 Mode</label>
+                  </div>
+                  <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="quickEnableScheduling">
+                    <label class="form-check-label" for="quickEnableScheduling">Auto Scheduling</label>
+                  </div>
+                  <hr>
+                  <div class="mb-2">
+                    <small class="text-muted">Quick Time Presets</small>
+                  </div>
+                  <div class="d-grid gap-1">
+                    <button class="btn btn-sm btn-outline-primary" onclick="setQuickSchedule('morning')">
+                      Morning (8AM-12PM)
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="setQuickSchedule('afternoon')">
+                      Afternoon (12PM-6PM)
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="setQuickSchedule('evening')">
+                      Evening (6PM-11PM)
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header">
+                  <i class="bi bi-activity"></i> Scheduler Status
+                </div>
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Scheduler</span>
+                    <span class="badge bg-secondary" id="schedulerStatus">Disabled</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Next Action</span>
+                    <span class="text-muted" id="nextAction">None</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span>Uptime Today</span>
+                    <span class="text-success" id="uptimeToday">00:00:00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Logs View -->
         <div id="logsView" class="d-none">
           <div class="card mb-4">
