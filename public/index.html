@@ -8,26 +8,28 @@
     if (localStorage.getItem('theme') === 'dark') {
       document.documentElement.classList.add('dark');
     }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
     tailwind.config = {
       darkMode: 'class'
     };
   </script>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 <body class="min-h-full bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
   <div class="flex flex-col md:flex-row min-h-screen">
-    <aside class="bg-gray-800 dark:bg-gray-800 text-gray-100 w-full md:w-64 p-4">
+    <aside class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 w-full md:w-64 p-4">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-xl font-semibold">YouTube Live</h1>
-        <button id="themeToggle" class="text-gray-300 hover:text-white" title="Toggle theme"><i class="bi bi-moon-fill"></i></button>
+        <button id="themeToggle" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white" title="Toggle theme"><i class="bi bi-moon-fill"></i></button>
       </div>
       <nav>
         <ul class="space-y-2">
-          <li><a href="#" class="nav-link block px-2 py-1 rounded hover:bg-gray-700" data-view="dashboardView"><i class="bi bi-play-circle mr-2"></i>Dashboard</a></li>
-          <li><a href="#" id="mediaBtn" class="nav-link block px-2 py-1 rounded hover:bg-gray-700" data-view="mediaView"><i class="bi bi-film mr-2"></i>Media Files</a></li>
-          <li><a href="#" id="settingsBtn" class="nav-link block px-2 py-1 rounded hover:bg-gray-700" data-view="settingsView"><i class="bi bi-gear mr-2"></i>Settings</a></li>
-          <li><a href="#" id="logsBtn" class="nav-link block px-2 py-1 rounded hover:bg-gray-700" data-view="logsView"><i class="bi bi-terminal mr-2"></i>Stream Logs</a></li>
+          <li><a href="#" class="nav-link block px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700" data-view="dashboardView"><i class="bi bi-play-circle mr-2"></i>Dashboard</a></li>
+          <li><a href="#" id="mediaBtn" class="nav-link block px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700" data-view="mediaView"><i class="bi bi-film mr-2"></i>Media Files</a></li>
+          <li><a href="#" id="settingsBtn" class="nav-link block px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700" data-view="settingsView"><i class="bi bi-gear mr-2"></i>Settings</a></li>
+          <li><a href="#" id="logsBtn" class="nav-link block px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700" data-view="logsView"><i class="bi bi-terminal mr-2"></i>Stream Logs</a></li>
         </ul>
       </nav>
     </aside>
