@@ -68,6 +68,17 @@ You can run the application in a container with FFmpeg preinstalled.
    ```
    FFmpeg is installed inside the image, so no host setup is required.
 
+### Docker Compose
+
+Alternatively, use Docker Compose to build and run the service:
+
+1. Copy `env.example` to `.env` and adjust the values as needed.
+2. Start the stack:
+   ```
+   docker compose up --build
+   ```
+   This will expose the app on port 3001 and mount the `media` directory and database for persistence.
+
 ## Usage
 
 1. **Configuration**: 
