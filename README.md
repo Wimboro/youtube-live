@@ -7,7 +7,7 @@ A web application that allows you to easily manage 24/7 YouTube live streaming w
 - Stream videos to YouTube 24/7 with a user-friendly web interface
 - Configure streaming settings through the web dashboard
 - Manage media files for streaming
-- Upload media files through the dashboard
+- Upload and delete media files through the dashboard
 - View streaming logs in real-time
 - Randomize playback order
 - Loop playlist continuously
@@ -59,6 +59,7 @@ A web application that allows you to easily manage 24/7 YouTube live streaming w
 
 2. **Media Files**:
    - Upload videos directly from the dashboard or add them to the 'media' directory
+   - Delete unwanted media files from the dashboard
    - View and manage your media files in the Media Files section
    - Refresh the media list after adding new files
 

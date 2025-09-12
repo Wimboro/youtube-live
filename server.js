@@ -6,7 +6,6 @@ const socketIO = require('socket.io');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
-const ffmpeg = require('fluent-ffmpeg');
 const multer = require('multer');
 const Database = require('./database');
 
@@ -221,6 +220,20 @@ app.post('/api/media/upload', upload.single('mediaFile'), (req, res) => {
     return res.status(400).json({ success: false, error: 'No file uploaded' });
   }
   res.json({ success: true, filename: req.file.filename });
+});
+
+// Route for deleting media files
+app.delete('/api/media/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(currentConfig.mediaDirectory, filename);
+
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error('Error deleting media file:', err);
+      return res.status(500).json({ success: false, error: 'Failed to delete file' });
+    }
+    res.json({ success: true });
+  });
 });
 
 // New route for saving configuration

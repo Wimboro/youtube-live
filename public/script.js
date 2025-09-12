@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Update media table
       if (appState.mediaFiles.length === 0) {
-        mediaTableBody.innerHTML = '<tr><td colspan="4" class="text-center">No media files found</td></tr>';
+        mediaTableBody.innerHTML = '<tr><td colspan="5" class="text-center">No media files found</td></tr>';
       } else {
         mediaTableBody.innerHTML = '';
         appState.mediaFiles.forEach((file, index) => {
@@ -221,13 +221,39 @@ document.addEventListener('DOMContentLoaded', () => {
             <td>${file}</td>
             <td>${fileExtension}</td>
             <td><span class="badge bg-success">Ready</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline-danger delete-media-btn" data-filename="${file}">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
           `;
           mediaTableBody.appendChild(row);
+        });
+
+        document.querySelectorAll('.delete-media-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const filename = btn.dataset.filename;
+            if (!confirm(`Delete ${filename}?`)) return;
+
+            try {
+              const response = await fetch(`/api/media/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+              const result = await response.json();
+              if (result.success) {
+                addLog(`Deleted ${filename}`);
+                loadMediaFiles();
+              } else {
+                showError(result.error || 'Failed to delete file');
+              }
+            } catch (error) {
+              console.error('Error deleting media file:', error);
+              showError('Error deleting media file');
+            }
+          });
         });
       }
     } catch (error) {
       console.error('Error loading media files:', error);
-      mediaTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading media files</td></tr>';
+      mediaTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading media files</td></tr>';
     }
   };
   
