@@ -27,6 +27,7 @@ A web application that allows you to easily manage 24/7 YouTube live streaming w
 - Stream videos to YouTube 24/7 with a user-friendly web interface
 - Configure streaming settings through the web dashboard
 - Manage media files for streaming
+- Upload and delete media files through the dashboard
 - View streaming logs in real-time
 - Randomize playback order
 - Loop playlist continuously
@@ -70,6 +71,34 @@ A web application that allows you to easily manage 24/7 YouTube live streaming w
 
 6. Open your web browser and navigate to `http://localhost:3001`
 
+## Docker
+
+You can run the application in a container with FFmpeg preinstalled.
+
+1. Build the image:
+   ```
+   docker build -t youtube-live .
+   ```
+2. Run the container:
+   ```
+   docker run -p 3001:3001 \
+     -v $(pwd)/media:/app/media \
+     -v $(pwd)/stream_config.db:/app/stream_config.db \
+     youtube-live
+   ```
+   FFmpeg is installed inside the image, so no host setup is required.
+
+### Docker Compose
+
+Alternatively, use Docker Compose to build and run the service:
+
+1. Copy `env.example` to `.env` and adjust the values as needed.
+2. Start the stack:
+   ```
+   docker compose up --build
+   ```
+   This will expose the app on port 3001 and mount the `media` directory and database for persistence.
+
 ## Usage
 
 1. **Configuration**: 
@@ -77,7 +106,8 @@ A web application that allows you to easily manage 24/7 YouTube live streaming w
    - Configure any other settings as needed
 
 2. **Media Files**:
-   - Add video files to the 'media' directory
+   - Upload videos directly from the dashboard or add them to the 'media' directory
+   - Delete unwanted media files from the dashboard
    - View and manage your media files in the Media Files section
    - Refresh the media list after adding new files
 
